@@ -78,11 +78,11 @@ function start_http_server() {
         <form>
             <label>Email</label>
             <br>
-            <input name="wanted_user_mail" size="40" >
+            <input name="wanted_user_mail" size="40" type="email" required>
             <br><br>
             <label>Adresse MAC (sans séparateurs)</label>
             <br>
-            <input name="mac_address" maxlength="12" size="12">
+            <input name="mac_address" type="text" pattern="[0-9a-fA-F]{12}" size="12" required>
             <br><br>
             <input type="submit" value="Assigner un numéro de téléphone disponible">
         </form>
