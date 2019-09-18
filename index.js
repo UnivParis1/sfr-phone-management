@@ -28,6 +28,9 @@ const assign_free_phoneNumber = async (wanted_user_mail, mac_address) => {
         await helpers.add_ids_to_allow_CSS_selector(page, "SPM-Email")
         await page.type('#SPM-Email input', wanted_user_mail + '\n')
         await helpers.handle_select2(page, '#SPM-Profile', 'Basic profile', 'exact')
+        if (!await page.$eval('#SPM-Company .select2-chosen', elt => elt && elt.innerText === 'UNIVERSITE PARIS 1 PANTHEON-SORBONNE')) {
+            throw "Utilisateur inconnu ou avec déjà un téléphone";
+        }
         if (!await page.$eval('#SPM-Site .select2-chosen', elt => elt && elt.textContent === 'LOURCINE')) {
             await helpers.handle_select2(page, '#SPM-Site', 'LOURCINE', 'exact')
         }
@@ -64,6 +67,9 @@ function start_http_server() {
         if (req.query.mac_address && req.query.wanted_user_mail) {
             assign_free_phoneNumber(req.query.wanted_user_mail, req.query.mac_address.toUpperCase()).then(chosen_phoneNumber => {
                 res.send(`Numéro assigné : ${chosen_phoneNumber}`)
+            }, err => {
+                console.error(err)
+                res.send(err)
             })
             return;
         }
