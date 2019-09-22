@@ -7,4 +7,6 @@ module.exports = {
     http_server: {
         port: 8080,
     },
+
+    dumps_on_error_directory: '/webhome/sfr-phone-m/dumps-on-error',
 };

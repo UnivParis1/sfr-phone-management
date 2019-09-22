@@ -1,5 +1,6 @@
 #!/usr/bin/env nodejs
 
+const fs = require('fs')
 const express = require('express')
 const puppeteer = require('puppeteer');
 const conf = require('./conf')
@@ -8,9 +9,23 @@ const helpers = require('./helpers')
 require('console-stamp')(console, 'HH:MM:ss.l');
 
 
-const assign_free_phoneNumber = async (wanted_user_mail, mac_address) => {
+const with_puppeteer = async (doit) => {
     const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
     const page = await browser.newPage();
+    try {
+        return await doit(page)
+    } catch (err) {
+        const prefix = conf.dumps_on_error_directory + "/" + new Date().toISOString()
+        fs.writeFileSync(prefix + ".html", await page.$eval('body', elt => elt.innerHTML))
+        await page.screenshot({ path: prefix + ".png" })
+        console.error("dumped last state of browser in files " + prefix + ".*")
+        throw err;
+    } finally {
+        await browser.close();
+    }
+}
+
+const assign_free_phoneNumber = (wanted_user_mail, mac_address) => async (page) => {
     let chosen_phoneNumber;
 
     await helpers.do_and_waitForNavigation(page, 'first page', () => page.goto(conf.base_url));
@@ -55,8 +70,6 @@ const assign_free_phoneNumber = async (wanted_user_mail, mac_address) => {
         document.querySelector('button[name=submit]').textContent === 'Submitted'
     ))
 
-    await browser.close();
-
     return chosen_phoneNumber;
 }
 
@@ -65,8 +78,11 @@ function start_http_server() {
     
     app.get('/', (req, res) => {
         if (req.query.mac_address && req.query.wanted_user_mail) {
-            assign_free_phoneNumber(req.query.wanted_user_mail, req.query.mac_address.toUpperCase()).then(chosen_phoneNumber => {
-                res.send(`Numéro assigné : ${chosen_phoneNumber}`)
+            const { wanted_user_mail, mac_address } = req.query;
+            with_puppeteer(assign_free_phoneNumber(wanted_user_mail, mac_address.toUpperCase())).then(chosen_phoneNumber => {
+                const msg = `Numéro ${chosen_phoneNumber} assigné à ${wanted_user_mail} (${mac_address})`
+                console.log(msg)
+                res.send(msg)
             }, err => {
                 console.error(err)
                 res.send(err)
