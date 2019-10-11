@@ -25,8 +25,7 @@ const with_puppeteer = async (doit) => {
     }
 }
 
-const assign_free_phoneNumber = (wanted_user_mail, mac_address) => async (page) => {
-    let chosen_phoneNumber;
+const login = async (page) => {
 
     await helpers.do_and_waitForNavigation(page, 'first page', () => page.goto(conf.base_url));
 
@@ -38,6 +37,10 @@ const assign_free_phoneNumber = (wanted_user_mail, mac_address) => async (page) 
     
     await helpers.SPA_step(page, 'subscribe user', async () => {        
     }, '.block-mobile [href="?id=subscribe_user"]')
+}
+
+const assign_free_phoneNumber = (wanted_user_mail, mac_address) => async (page) => {
+    await login(page)
 
     await helpers.SPA_step(page, 'chose user & profile', async () => {
         await helpers.add_ids_to_allow_CSS_selector(page, "SPM-Email")
@@ -50,6 +53,8 @@ const assign_free_phoneNumber = (wanted_user_mail, mac_address) => async (page) 
             await helpers.handle_select2(page, '#SPM-Site', 'LOURCINE', 'exact')
         }
     }, 'button[name=submit]');
+
+    let chosen_phoneNumber;
     
     await helpers.SPA_step(page, 'profile options', async () => {
         await helpers.add_ids_to_allow_CSS_selector(page, 'SPM-Activation-Date')
