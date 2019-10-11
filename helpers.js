@@ -1,3 +1,11 @@
+const fs = require('fs')
+
+const waitForFile = async (page, filename) => {
+    console.log('Waiting to download file...')
+    while (!fs.existsSync(filename)) {
+        await page.waitFor(500)
+    }
+}
 
 const click_when_visible = async (page, action_selector) => {
     console.log("waiting for elt to click", action_selector)
@@ -89,10 +97,36 @@ const handle_select2_fuzzy = async (page, field_id_selector, search, which_choic
     return wanted
 }
 
+const child_process = require('child_process')
+
+function popen({ inText, cmd, params }) {
+    let p = child_process.spawn(cmd, params);
+    p.stdin.write(inText);
+    p.stdin.end();
+
+    return new Promise((resolve, reject) => {
+        let output = '';
+        let get_ouput = data => { output += data; };
+        
+        p.stdout.on('data', get_ouput);
+        p.stderr.on('data', get_ouput);
+        p.on('error', event => {
+            reject(event);
+        });
+        p.on('close', code => {
+            if (code === 0) resolve(output); else reject(output);
+        });
+    });
+}
+
+
 module.exports = {
+    waitForFile,
+    click_when_visible,
     SPA_step,
     do_and_waitForNavigation,
     add_ids_to_allow_CSS_selector,
     handle_select2,
-    handle_select2_fuzzy
+    handle_select2_fuzzy,
+    popen,
 }

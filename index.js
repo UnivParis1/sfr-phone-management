@@ -78,7 +78,7 @@ const assign_free_phoneNumber = (wanted_user_mail, mac_address) => async (page) 
     return chosen_phoneNumber;
 }
 
-function start_http_server() {
+function http_server() {
     const app = express()
     
     app.get('/', (req, res) => {
@@ -113,4 +113,61 @@ function start_http_server() {
     app.listen(conf.http_server.port, () => console.log(`Started on port ${conf.http_server.port}!`))
 }
 
-start_http_server();
+const get_sys_user = async (page) => {
+    await login(page)
+
+    await helpers.do_and_waitForNavigation(page, 'user list', () => page.goto(conf.base_url + '/sys_user_list.do'))
+
+    await page.click("#sys_user_table .icon-menu", { button: 'right' })
+
+    const exportElt = await page.waitFor(() => (
+        Array.from(document.querySelectorAll("#context_list_headersys_user > .context_item")).find(e => e.textContent === 'Export')
+    ));
+    await exportElt.click();
+
+    const exportJson_item_id = await page.evaluate(() => (
+        Array.from(document.querySelectorAll("#context_list_headersys_user ~ div > .context_item")).find(e => e.textContent === 'JSON').getAttribute('item_id')
+    ))
+    await page.click(`[item_id="${exportJson_item_id}"]`);
+
+    const export_file = conf.download_directory + '/sys_user.json'
+    if (fs.existsSync(export_file)) fs.unlinkSync(export_file)
+
+    await page._client.send('Page.setDownloadBehavior', {
+        behavior: 'allow',
+        downloadPath: conf.download_directory,
+    });
+
+    await helpers.click_when_visible(page, '#download_button:not(.disabled)')    
+
+    await helpers.waitForFile(page, export_file)
+
+    return export_file
+}
+
+const sync_users = async () => {
+    const export_file = await with_puppeteer(get_sys_user);
+    //const export_file = conf.download_directory + '/sys_user.json'
+    let { records } = JSON.parse(fs.readFileSync(export_file, 'utf8'));
+    fs.unlinkSync(export_file)
+
+    let users = records.filter(user => (
+        user.u_external_number && user.u_directory_type === "company directory"
+    )).map(user => (
+        { uid: user.u_user_id, telephoneNumber: user.u_external_number }
+    ))
+    console.log("calling crejsonldap with users:", JSON.stringify(users))
+    const crejsonldap_param = JSON.stringify({ id: ["uid"], users: users.map(attrs => ({ attrs })) })
+    const response = await helpers.popen({ inText: crejsonldap_param, ...conf.crejsonldap })
+    console.log("crejsonldap response:", response)
+}
+
+
+const cmds = { http_server, sync_users }
+
+const cmd = process.argv[2]
+if (cmds[cmd]) {
+    cmds[cmd]()
+} else {
+    console.error(`usage: ./index.js ${Object.keys(cmds).join('|')}`)
+}
