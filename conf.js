@@ -1,5 +1,5 @@
 module.exports = {
-    base_url: 'https://mycollaboration.service-now.com/management?id=home',
+    base_url: 'https://mycollaboration.service-now.com',
 
     admin_login: "Foo.Bar@univ.fr",
     admin_password: "xxx",

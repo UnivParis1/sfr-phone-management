@@ -27,7 +27,7 @@ const with_puppeteer = async (doit) => {
 
 const login = async (page) => {
 
-    await helpers.do_and_waitForNavigation(page, 'first page', () => page.goto(conf.base_url));
+    await helpers.do_and_waitForNavigation(page, 'first page', () => page.goto(conf.base_url + '/management?id=home'));
 
     await helpers.SPA_step(page, 'login', async () => {
         await page.waitFor("#username")
