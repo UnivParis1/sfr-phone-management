@@ -152,7 +152,7 @@ const sync_users = async () => {
     fs.unlinkSync(export_file)
 
     let users = records.filter(user => (
-        user.u_external_number && user.u_directory_type === "company directory"
+        user.u_external_number && user.u_profile_asset && user.u_directory_type === "company directory"
     )).map(user => (
         { uid: user.u_user_id, telephoneNumber: user.u_external_number }
     ))
