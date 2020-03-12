@@ -5,6 +5,7 @@ const express = require('express')
 const puppeteer = require('puppeteer');
 const conf = require('./conf')
 const helpers = require('./helpers')
+const api = require('./api')
 
 require('console-stamp')(console, 'HH:MM:ss.l');
 
@@ -145,22 +146,7 @@ const get_sys_user = async (page) => {
     return export_file
 }
 
-const sync_users = async () => {
-    const export_file = await with_puppeteer(get_sys_user);
-    //const export_file = conf.download_directory + '/sys_user.json'
-    let { records } = JSON.parse(fs.readFileSync(export_file, 'utf8'));
-    fs.unlinkSync(export_file)
-
-    let users = records.filter(user => (
-        user.u_external_number && user.u_profile_asset && user.u_directory_type === "company directory"
-    )).map(user => (
-        { uid: user.u_user_id, telephoneNumber: user.u_external_number }
-    ))
-    console.log("calling crejsonldap with users:", JSON.stringify(users))
-    const crejsonldap_param = JSON.stringify({ id: ["uid"], users: users.map(attrs => ({ attrs })) })
-    const response = await helpers.popen({ inText: crejsonldap_param, ...conf.crejsonldap })
-    console.log("crejsonldap response:", response)
-}
+const sync_users = api.sync_users
 
 
 const cmds = { http_server, sync_users }

@@ -4,12 +4,17 @@ module.exports = {
     admin_login: "Foo.Bar@univ.fr",
     admin_password: "xxx",
 
+    api: {
+        client_id: '...',
+        client_secret: '...',
+    },
+
     http_server: {
         port: 8080,
     },
 
-    crejsonldap: {
-        cmd: 'crejsonldap',
+    jsonattrmod: {
+        cmd: 'jsonattrmod',
         params: [],
     },
 

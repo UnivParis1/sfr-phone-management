@@ -6,6 +6,8 @@
   "dependencies": {
     "console-stamp": "^0.2.9",
     "express": "^4.17.1",
+    "lodash": "^4.17.15",
+    "node-fetch": "^2.6.0",
     "puppeteer": "^1.19.0"
   },
   "devDependencies": {},
